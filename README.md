@@ -1,81 +1,139 @@
-## hsweb后台管理基础框架
-
-[![Join the chat at https://gitter.im/hs-web/hsweb-framework](https://badges.gitter.im/hs-web/hsweb-framework.svg)](https://gitter.im/hs-web/hsweb-framework?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
+## hsweb 后台管理基础框架
+[![Maven Central](https://img.shields.io/maven-central/v/org.hswebframework.web/hsweb-framework.svg)](http://search.maven.org/#search%7Cga%7C1%7Corg.hswebframework)
+[![Codecov](https://codecov.io/gh/hs-web/hsweb-framework/branch/master/graph/badge.svg)](https://codecov.io/gh/hs-web/hsweb-framework/branch/master)
 [![Build Status](https://travis-ci.org/hs-web/hsweb-framework.svg?branch=master)](https://travis-ci.org/hs-web/hsweb-framework)
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg?style=flat-square)](https://www.apache.org/licenses/LICENSE-2.0.html)
-[![Insight.io](https://www.insight.io/repoBadge/github.com/hs-web/hsweb-framework)](https://insight.io/github.com/hs-web/hsweb-framework)
-### 3.0
-[全新的架构,开发中...](https://github.com/hs-web/hsweb-framework/tree/3.0)
 
-### 业务功能
-现在:
+  [贡献代码](CONTRIBUTING.md)  [用户手册](https://docs.hsweb.io)
 
-1. 权限管理: 权限资源-角色-用户.
-2. 配置管理: kv结构,自定义配置.可通过此功能配置数据字典.
-3. 脚本管理: 动态脚本,支持javascript,groovy,java动态编译执行.
-4. 表单管理: 动态表单,可视化设计表单,自动生成数据库以及系统权限.无需重启直接生效.
-5. 模块设置: 配合动态表单实现表格页,查询条件自定义.
-6. 数据库维护: 在线维护数据库,修改表结构,执行sql.
-7. 数据源管理: 配置多数据源.
-8. 代码生成器: 在线生成代码,打包下载.可自定义模板.
-9. 定时任务: 配置定时任务,使用动态脚本编写任务内容.
-10. 系统监控: 监控系统资源使用情况.
-11. 缓存监控: 监控缓存情况.
-12. 访问日志: 记录用户每次操作情况
+## 应用场景
+1. 完全开源的后台管理系统.
+2. 细粒度(按钮,行,列)权限控制的后台管理系统.
+3. 模块化的后台管理系统.
+4. 功能可拓展的后台管理系统.
+5. 集成各种常用功能的后台管理系统.
+6. 前后分离的后台管理系统.
 
-未来
+注意:
+项目主要基于`spring-boot`,`mybatis`. 在使用`hsweb`之前,你应该对`spring-boot`有一定的了解.
 
-1. 组织架构管理: 地区-机构-部门-职务-人员.
-2. 工作流管理: activiti工作流,在线配置流程,配合动态表单实现自定义流程.
-3. 邮件代收: 代收指定邮箱的邮件
+项目模块太多?不要被吓到.我们不推荐将本项目直接`clone`后修改,运行.而是使用maven依赖的方式使用`hsweb`. 
+选择自己需要的模块进行依赖,正式版发布后,所有模块都将发布到maven中央仓库.
+你可以参照[demo](https://github.com/hs-web/hsweb3-demo)进行使用.
+
+## 文档
+各个模块的使用方式查看对应模块下的 `README.md`,在使用之前,
+你可以先粗略浏览一下各个模块,对每个模块的作用有大致的了解.
+
+## 核心技术选型
+
+1. Java 8
+2. Maven3
+3. Spring Boot 1.5.x
+4. Mybatis 
+5. Hsweb Easy Orm (使用`hsweb-easy-orm`拓展`Myabtis`实现动态条件)
+
+## 模块简介
+
+| 模块       | 说明          |   进度 |
+| ------------- |:-------------:| ----|
+|[hsweb-authorization](hsweb-authorization)|权限控制| 100%|
+|[hsweb-commons](hsweb-commons) |基础通用功能| 100%|
+|[hsweb-concurrent](hsweb-concurrent)|并发包,缓存,锁,计数器等| 80%|
+|[hsweb-core](hsweb-core)|框架核心,基础工具类| 100%|
+|[hsweb-datasource](hsweb-datasource)|数据源| 100%|
+|[hsweb-logging](hsweb-logging)| 日志|  100%|
+|[hsweb-starter](hsweb-starter)|模块启动器| 100%|
+|[hsweb-system](hsweb-system)|**系统常用功能**| 80%|
+|[hsweb-thirdparty](hsweb-thirdparty)| 第三方插件 | 100% |
+
+## 核心特性
+1. DSL风格,可拓展的通用curd,支持前端直接传参数,无需担心任何sql注入.
+```java
+  //where name = #{name} limit 0,20
+  createQuery().where("name",name).list(0,20);
+  
+  //update s_user set name = #{user.name} where id = #{user.id}
+  createUpdate().set(user::getName).where(user::getId).exec();
+```
+
+2. 灵活的权限控制
+```java
+
+@PostMapping("/account")
+@Authorize(permission="account-manager",action="add")
+public ResponseMessage<Sring> addAccount(@RequestBody Account account){
+  return ok(accountService.addAccount(account));
+}
+
+@GettMapping("/account")
+@Authorize(permission="account-manager",action="query",dataAccess=@RequiresDataAccess)//开启数据权限控制
+public ResponseMessage<PageResult<Account>> addAccount(QueryParamEntity query){
+
+  //用户设置了数据权限后,query的参数属性将被修改
+  
+  return ok(accountService.selectPager(query));
+}
 
 
-### 框架功能
-0. 全局restful+json,前后分离.
-1. 通用dao,service,controller类，增删改查直接继承即可.
-2. 通用mybatis配置文件,支持多种条件查询自动生成,支持自动生成insert,update,delete语句,支持和查询相同的各种条件.
-3. 实现用户,权限管理;基于aop,注解,精确到按钮的权限控制.
-4. 动态表单功能,可在前端设计表单,动态生成数据库表,提供统一的增删改查接口.
-5. 在线代码生成器,可自定义模板.
-6. 动态多数据源,支持数据源热加载,热切换,支持分布式事务.
-7. 数据库支持 mysql,oracle,h2.
-8. websocket支持.
-9. 定时调度支持,可在页面配置定时任务,编写任务脚本执行。
-10. **强大的dsl查询方式,复杂条件一句生成**
+```
 
-### 演示
-1. 示例:[demo.hsweb.me](http://demo.hsweb.me)
-2. 测试用户:test (test2,test3,test4....) 密码:123456 
-3. 演示项目源码:[hsweb-platform](https://github.com/hs-web/hsweb-platform)
+3. 灵活的模块版本维护脚本
 
-### 文档
-1. [安装使用](doc/1.安装使用.md)
-2. [API](doc/2.API.md)
+`resources/hsweb-starter.js`
 
-### 此版本待完善功能
-1. 单元测试编写
-2. 项目文档编写
-3. ~~增加定时调度,支持集群,任务采用脚本方式编写.~~
-4. 完善数据库持续集成,版本更新时自动更新数据库结构.
-5. 完善动态表单发布,表单发生变化后,自动重新发布(解决集群下,表单配置不一致).
+```js
+//组件信息
+var info = {
+    groupId: "com.company",
+    artifactId: "module-name",
+    version: "1.0.2",
+    website: "company.com",
+    author: "作者",
+    comment: "模块名称"
+};
 
-### 技术选型
-第三方:
+//版本更新信息
+var versions = [
+    {
+        version: "1.0.2", //当info.version大于等于此版本号时,执行upgrade
+        upgrade: function (context) {
+            var database = context.database;
+            //增加冻结金额字段
+            database.createOrAlter("acc_account")
+                .addColumn().name("freeze_balance").jdbcType(JDBCType.BIGINT).comment("冻结金额").commit()
+                .comment("资金账户")
+                .commit();
+        }
+    }
 
-1. MVC:[spring-boot](https://github.com/spring-projects/spring-boot). 开箱即用,学习成本低,部署方便(main方法运行).
-2. ORM:[mybatis](https://github.com/mybatis/mybatis-3). 配置灵活,简单方便.
-3. JTA:[atomikos](https://www.atomikos.com/). 分布式事务,多数据源事务全靠他.
-4. Cache:[spring-cache](https://github.com/spring-projects/spring-framework/tree/master/spring-context/src/main/java/org/springframework/cache). 统一接口,注解使用,simple,redis... 自动切换.
-5. Scheduler:[quartz](https://github.com/quartz-scheduler/quartz). 开源稳定,支持集群.
+];
+var JDBCType = java.sql.JDBCType;
 
-自家:
+//首次引入依赖,将执行安装操作
+function install(context) {
+    var database = context.database;
+    database.createOrAlter("acc_account")
+        .addColumn().name("id").varchar(32).notNull().primaryKey().comment("ID").commit()
+        .addColumn().name("account_no").varchar(32).notNull().comment("资金账户号").commit()
+        //更多字段
+        //索引
+        .index().name("idx_acc_account_no")
+        .column("account_no").commit()//account_no索引
+        .comment("资金账户").commit();
+}
 
-0. [hsweb-commons](https://github.com/hs-web/hsweb-commons) :通用工具类
-1. [hsweb-easy-orm](https://github.com/hs-web/hsweb-easy-orm) :为动态表单设计的orm框架
-2. [hsweb-expands-compress](https://github.com/hs-web/hsweb-expands/tree/master/hsweb-expands-compress) :文件压缩，解压操作
-3. [hsweb-expands-office](https://github.com/hs-web/hsweb-expands/tree/master/hsweb-expands-office) :office文档操作( excel读写，模板导出，word模板导出)
-4. [hsweb-expands-request](https://github.com/hs-web/hsweb-expands/tree/master/hsweb-expands-request): 请求模拟(http,ftp)
-5. [hsweb-expands-script](https://github.com/hs-web/hsweb-expands/tree/master/hsweb-expands-script):动态脚本,动态编译执行java,groovy,javascript,spel,ognl....
-6. [hsweb-expands-shell](https://github.com/hs-web/hsweb-expands/tree/master/hsweb-expands-shell):shell执行
-7. [hsweb-expands-template](https://github.com/hs-web/hsweb-expands/tree/master/hsweb-expands-template):各种模板引擎
+//设置依赖,固定代码,无需修改
+dependency.setup(info)
+    .onInstall(install) //安装时执行
+    .onUpgrade(function (context) { //更新时执行
+        var upgrader = context.upgrader;
+        upgrader.filter(versions) //过滤版本信息
+            .upgrade(function (newVer) { //执行更新
+                newVer.upgrade(context);
+            });
+    })
+    .onUninstall(function (context) { //卸载时执行
+
+    });
+```
